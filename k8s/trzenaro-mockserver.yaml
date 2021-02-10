@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: trzenaro-mockserver
+spec:
+  selector:
+    matchLabels:
+      app: trzenaro-mockserver
+  serviceName: trzenaro-mockserver
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: trzenaro-mockserver
+    spec:
+      containers:
+        - name: trzenaro-mockserver
+          env:
+            - name: SESSIONS_PATH
+              value: "/app/sessions"
+            - name: SERVER_PORT
+              value: "3000"
+            - name: API_PORT
+              value: "3050"
+          image: trzenaro/mockserver:0.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+            - containerPort: 3050
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: sessions-data
+              mountPath: /app/sessions
+      volumes:
+        - name: sessions-data
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trzenaro-mockserver
+  labels:
+    app: trzenaro-mockserver
+spec:
+  ports:
+    - port: 3000
+      protocol: TCP
+      name: server
+      targetPort: 3000
+    - port: 3050
+      protocol: TCP
+      name: api
+      targetPort: 3050
+  selector:
+    app: trzenaro-mockserver
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: trzenaro-mockserver
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /mockserver/server(/|$)(.*)
+            backend:
+              serviceName: trzenaro-mockserver
+              servicePort: 3000
+            pathType: Prefix
+          - path: /mockserver/api(/|$)(.*)
+            backend:
+              serviceName: trzenaro-mockserver
+              servicePort: 3050
+            pathType: Prefix
