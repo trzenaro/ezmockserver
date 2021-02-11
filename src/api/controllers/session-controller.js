@@ -37,7 +37,7 @@ const activateSession = async (ctx) => {
 };
 
 const deactivateCurrentSession = async (ctx) => {
-  Object.assign(session, { name: "default", requests: {} });
+  Object.assign(session, { name: "" });
   ctx.status = 204;
 };
 

@@ -8,58 +8,60 @@ const sleep = require("../../utils/sleep");
 const SLASH_SEPARATOR = "-";
 
 const mockMiddleware = async (ctx) => {
-  const { originalUrl } = ctx;
-  let parsedUrl = originalUrl.substring(1).replace(/\//g, SLASH_SEPARATOR) || SLASH_SEPARATOR;
-
-  const requestDirectory = path.join(sessionsDirectory, session.name, parsedUrl, ctx.method.toLocaleLowerCase());
-
-  if (session.sticky) {
-    session.requests[requestDirectory] = 0;
-  } else {
-    if (requestDirectory in session.requests) {
-      session.requests[requestDirectory]++;
-    } else {
-      session.requests[requestDirectory] = 0;
-    }
-  }
-
-  const requestCounter = session.requests[requestDirectory];
-
   const response = { status: 500, headers: {}, body: "", delay: 0 };
 
-  const filePrefix = path.join(requestDirectory, requestCounter.toString());
-  const jsFilename = `${filePrefix}.js`;
-  const responseOptionsFile = `${filePrefix}.json`;
-  const responseDataFile = `${filePrefix}.content`;
+  if (session.name) {
+    const { originalUrl } = ctx;
+    let parsedUrl = originalUrl.substring(1).replace(/\//g, SLASH_SEPARATOR) || SLASH_SEPARATOR;
 
-  if (session.logRequest) await logRequest(ctx, { requestDirectory, filePrefix });
+    const requestDirectory = path.join(sessionsDirectory, session.name, parsedUrl, ctx.method.toLocaleLowerCase());
 
-  try {
-    if (session.fileType == "js") {
-      const jsFile = require(jsFilename);
-      session.requiredFiles.push(jsFilename);
-      Object.assign(response, jsFile.execute(ctx));
+    if (session.sticky) {
+      session.requests[requestDirectory] = 0;
     } else {
-      const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([
-        fsPromises.readFile(responseOptionsFile),
-        fsPromises.readFile(responseDataFile),
-      ]);
-
-      const responseOptions = JSON.parse(responseOptionsBuffer);
-      Object.assign(response, responseOptions, { body: responseDataBuffer });
+      if (requestDirectory in session.requests) {
+        session.requests[requestDirectory]++;
+      } else {
+        session.requests[requestDirectory] = 0;
+      }
     }
-  } catch (error) {
-    if (error.code === "ENOENT" || error.code == "MODULE_NOT_FOUND") {
-      await createDirectoryIfNotExists(requestDirectory);
-      if (error.code === "ENOENT") {
-        await createEmptyFiles([responseOptionsFile, responseDataFile]);
-      }
 
-      if (error.code === "MODULE_NOT_FOUND") {
-        await createEmptyFiles([jsFilename]);
+    const requestCounter = session.requests[requestDirectory];
+
+    const filePrefix = path.join(requestDirectory, requestCounter.toString());
+    const jsFilename = `${filePrefix}.js`;
+    const responseOptionsFile = `${filePrefix}.json`;
+    const responseDataFile = `${filePrefix}.content`;
+
+    if (session.logRequest) await logRequest(ctx, { requestDirectory, filePrefix });
+
+    try {
+      if (session.fileType == "js") {
+        const jsFile = require(jsFilename);
+        session.requiredFiles.push(jsFilename);
+        Object.assign(response, jsFile.execute(ctx));
+      } else {
+        const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([
+          fsPromises.readFile(responseOptionsFile),
+          fsPromises.readFile(responseDataFile),
+        ]);
+
+        const responseOptions = JSON.parse(responseOptionsBuffer);
+        Object.assign(response, responseOptions, { body: responseDataBuffer });
       }
-    } else {
-      throw error;
+    } catch (error) {
+      if (error.code === "ENOENT" || error.code == "MODULE_NOT_FOUND") {
+        await createDirectoryIfNotExists(requestDirectory);
+        if (error.code === "ENOENT") {
+          await createEmptyFiles([responseOptionsFile, responseDataFile]);
+        }
+
+        if (error.code === "MODULE_NOT_FOUND") {
+          await createEmptyFiles([jsFilename]);
+        }
+      } else {
+        throw error;
+      }
     }
   }
 

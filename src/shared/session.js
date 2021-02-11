@@ -1,5 +1,5 @@
 module.exports = {
-  name: "default",
+  name: "",
   fileType: "json",
   sticky: false,
   logRequest: true,
