@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 require('dotenv').config();
 const api = require("./api/api");
 const server = require("./server/server");

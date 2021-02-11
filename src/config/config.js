@@ -1,10 +1,16 @@
-const path = require('path');
+const path = require("path");
+const fs = require("fs");
+
+const settingsPath = path.resolve(process.env.CONFIG_PATH || "mockserver.json");
+const settingsFile = fs.readFileSync(settingsPath);
+const settings = JSON.parse(settingsFile);
+
 module.exports = {
-  sessionsDirectory: process.env.SESSIONS_PATH || path.resolve("../../sessions"),
+  sessionsDirectory: settings.sessionsDirectory,
   server: {
-    port: process.env.SERVER_PORT || 3000,
+    port: settings.server.port,
   },
   api: {
-    port: process.env.API_PORT || 3050,
+    port: settings.api.port,
   },
 };

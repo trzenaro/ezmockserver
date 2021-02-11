@@ -6,8 +6,8 @@ RUN \
   cd /app && \
   npm install --production
 
-WORKDIR /app/src
+WORKDIR /app
 
 EXPOSE 3000 3050
 
-CMD ["node","index.js"]
+CMD ["node","src/index.js"]

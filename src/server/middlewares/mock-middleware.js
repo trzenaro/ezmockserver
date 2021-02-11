@@ -32,6 +32,8 @@ const mockMiddleware = async (ctx) => {
   const responseOptionsFile = `${filePrefix}.json`;
   const responseDataFile = `${filePrefix}.content`;
 
+  if (session.logRequest) await logRequest(ctx, { requestDirectory, filePrefix });
+
   try {
     if (session.fileType == "js") {
       const jsFile = require(jsFilename);
@@ -67,6 +69,22 @@ const mockMiddleware = async (ctx) => {
   });
   ctx.body = response.body;
   if (response.delay) await sleep(response.delay);
+};
+
+const logRequest = async (ctx, { requestDirectory, filePrefix }) => {
+  await createDirectoryIfNotExists(requestDirectory);
+  const requestFilePath = `${filePrefix}-request.json`;
+  await fsPromises.writeFile(
+    requestFilePath,
+    JSON.stringify({
+      href: ctx.request.href,
+      host: ctx.request.host,
+      ip: ctx.request.ip,
+      url: ctx.originalUrl,
+      headers: ctx.headers,
+      body: ctx.request.body,
+    }, null, 2),
+  );
 };
 
 module.exports = mockMiddleware;
