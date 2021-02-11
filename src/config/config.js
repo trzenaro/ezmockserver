@@ -6,7 +6,7 @@ const settingsFile = fs.readFileSync(settingsPath);
 const settings = JSON.parse(settingsFile);
 
 module.exports = {
-  sessionsDirectory: settings.sessionsDirectory,
+  sessionsDirectory: path.resolve(settings.sessionsDirectory),
   server: {
     port: settings.server.port,
   },

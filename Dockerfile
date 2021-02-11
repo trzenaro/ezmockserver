@@ -6,8 +6,8 @@ RUN \
   cd /app && \
   npm install --production
 
-WORKDIR /app
+WORKDIR /app/mockserver
 
 EXPOSE 3000 3050
 
-CMD ["node","src/index.js"]
+CMD ["node","../src/index.js"]
