@@ -4,6 +4,7 @@ const logger = require("koa-logger");
 const { api: config } = require("../config/config");
 const errorHandler = require("./middlewares/error-handler-middleware");
 const sessionRoutes = require("./routes/session-routes");
+const proxyRoutes = require("./routes/proxy-routes");
 
 const init = () => {
   const app = new Koa();
@@ -12,6 +13,7 @@ const init = () => {
   app.use(koaBody({ multipart: true }));
   app.use(errorHandler);
   app.use(sessionRoutes.routes());
+  app.use(proxyRoutes.routes());
 
   app.listen(config.port, () => console.log(`api running at ${config.port}`));
 };

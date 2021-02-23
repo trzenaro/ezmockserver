@@ -1,8 +1,9 @@
 module.exports = {
   name: "",
   fileType: "json",
-  sticky: false,
+  repeat: false,
   logRequest: true,
-  requests: {},
+  proxy: false,
+  requestCounter: 0,
   requiredFiles: [],
 };

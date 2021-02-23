@@ -1,16 +1,9 @@
 const fs = require("fs");
+const unzipper = require('unzipper');
 const { sessionsDirectory } = require("../../config/config");
 const session = require("../../shared/session");
-const unzipper = require('unzipper');
+const { deleteFile, listSubdirectories } = require('../../utils/fs');
 
-const fsPromises = fs.promises;
-
-const listSubdirectories = async (directory) => {
-  const directoryItems = await fsPromises.readdir(directory, {
-    withFileTypes: true,
-  });
-  return directoryItems.filter((directoryItem) => directoryItem.isDirectory()).map((directoryItem) => directoryItem.name);
-};
 
 const getSessions = async (ctx) => {
   const sessions = await listSubdirectories(sessionsDirectory);
@@ -26,8 +19,9 @@ const activateSession = async (ctx) => {
   Object.assign(session, {
     name: body.name,
     fileType: body.fileType || "json",
-    sticky: body.sticky || false,
-    requests: {},
+    repeat: body.repeat || false,
+    proxy: body.proxy || false,
+    requestCounter: 0,
     requiredFiles: [],
   });
 
@@ -49,7 +43,7 @@ const getCurrentSession = async (ctx) => {
 const addSessions = async (ctx) => {
   const { file } = ctx.request.files;
   await fs.createReadStream(file.path).pipe(unzipper.Extract({ path: sessionsDirectory })).promise();
-  await fsPromises.unlink(file.path);
+  await deleteFile(file.path);
 
   ctx.status = 201;
 };

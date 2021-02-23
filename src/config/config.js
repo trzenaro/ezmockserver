@@ -5,7 +5,7 @@ const settingsPath = path.resolve(process.env.CONFIG_PATH || "mockserver.json");
 const settingsFile = fs.readFileSync(settingsPath);
 const settings = JSON.parse(settingsFile);
 
-module.exports = {
+const config = {
   sessionsDirectory: path.resolve(settings.sessionsDirectory),
   server: {
     port: settings.server.port,
@@ -14,3 +14,13 @@ module.exports = {
     port: settings.api.port,
   },
 };
+
+const { proxy } = settings;
+if (proxy) {
+  config.proxy = {
+    ...proxy,
+    recordingDirectory: path.resolve(proxy.recordingDirectory),
+  };
+}
+
+module.exports = config;
