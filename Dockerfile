@@ -10,4 +10,4 @@ WORKDIR /app/mockserver
 
 EXPOSE 3000 3050
 
-CMD ["npm", "run" ,"--prefix", "..", "start"]
+CMD ["node", "../src/index.js"]

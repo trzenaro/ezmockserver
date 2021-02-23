@@ -1,3 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trzenaro-mockserver
+data:
+  mockserverConfig: |-
+    {
+      "sessionsDirectory": "./sessions",
+      "api": { "port": 3050 },
+      "server": { "port": 3000 },
+      "proxy": {
+        "recordingDirectory": "./proxy",
+        "prefix": [
+          { "path": "/path-one", "proxyPass": "https://server-one.com" },
+          { "path": "/path-two", "proxyPass": "https://server-two.com" },
+          { "path": "/path-three", "proxyPass": "https://server-three.com", "rewrite": "/" }
+        ]
+      }
+    }
+
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -16,14 +36,7 @@ spec:
     spec:
       containers:
         - name: trzenaro-mockserver
-          env:
-            - name: SESSIONS_PATH
-              value: "/app/sessions"
-            - name: SERVER_PORT
-              value: "3000"
-            - name: API_PORT
-              value: "3050"
-          image: trzenaro/mockserver:0.0.1
+          image: trzenaro/ezmockserver:0.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -31,16 +44,26 @@ spec:
           resources:
             requests:
               memory: "256Mi"
-              cpu: "500m"
+              cpu: "250m"
             limits:
-              memory: "512Mi"
-              cpu: "1000m"
+              memory: "384Mi"
+              cpu: "500m"
           volumeMounts:
             - name: sessions-data
-              mountPath: /app/sessions
+              mountPath: /app/mockserver/sessions
+            - name: proxy-data
+              mountPath: /app/mockserver/proxy
+            - name: mockserver-config
+              mountPath: /app/mockserver/mockserver.json
+              subPath: mockserverConfig
       volumes:
         - name: sessions-data
           emptyDir: {}
+        - name: proxy-data
+          emptyDir: {}
+        - name: mockserver-config
+          configMap:
+            name: trzenaro-mockserver
 
 ---
 apiVersion: v1
