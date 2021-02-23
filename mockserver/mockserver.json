@@ -1,9 +1,0 @@
-{
-  "sessionsDirectory": "../sessions",
-  "api": {
-    "port": 3050
-  },
-  "server": {
-    "port": 3000
-  }
-}
