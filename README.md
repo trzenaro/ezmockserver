@@ -6,7 +6,7 @@ docker run --rm \
   -v $(pwd)/mockserver:/app/mockserver \
   -p 3000:3000 \
   -p 3050:3050 \
-  trzenaro/ezmockserver:0.0.2
+  trzenaro/ezmockserver:0.1.0
 ```
 
 
