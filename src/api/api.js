@@ -15,7 +15,7 @@ const init = () => {
   app.use(sessionRoutes.routes());
   app.use(proxyRoutes.routes());
 
-  app.listen(config.port, () => console.log(`api running at ${config.port}`));
+  app.listen(config.port, () => console.log(`API running at ${config.port}`));
 };
 
 module.exports = {

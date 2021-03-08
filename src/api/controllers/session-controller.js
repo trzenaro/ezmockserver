@@ -21,7 +21,8 @@ const activateSession = async (ctx) => {
     fileType: body.fileType || "json",
     repeat: body.repeat || false,
     proxy: body.proxy || false,
-    requestCounter: 0,
+    groupByIP: body.groupByIP || true,
+    requestCounter: { "0.0.0.0": 0 },
     requiredFiles: [],
   });
 

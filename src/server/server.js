@@ -11,7 +11,7 @@ const init = () => {
   app.use(koaBody());
   app.use(errorHandler);
   app.use(mockMiddleware);
-  app.listen(config.port, () => console.log(`server running at ${config.port}`));
+  app.listen(config.port, () => console.log(`Server running at ${config.port}`));
 };
 
 module.exports = {

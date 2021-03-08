@@ -4,6 +4,7 @@ module.exports = {
   repeat: false,
   logRequest: true,
   proxy: false,
-  requestCounter: 0,
+  groupByIP: true,
+  requestCounter: { "0.0.0.0": 0 },
   requiredFiles: [],
 };

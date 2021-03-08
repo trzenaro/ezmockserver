@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const { promises: fsPromises } = require("fs");
 const path = require("path");
 const axios = require("axios").default;
@@ -6,32 +7,55 @@ const { createDirectoryIfNotExists, createFiles } = require("../../utils/fs");
 const session = require("../../shared/session");
 const sleep = require("../../utils/sleep");
 
-const SLASH_SEPARATOR = "-";
 const { proxy } = config;
+const MAX_URL_FILE_LENGTH = 230;
+const INVALID_FILENAME_CHARS = /<|>|:|"|\/|\\|\||\?|\*/g;
+
+const buildFilenames = (fileSettings) => {
+  let { directory, counter, method, url } = fileSettings;
+
+  url = url.substring(1);
+  if (url.length > MAX_URL_FILE_LENGTH) {
+    url = crypto.createHash("md5").update(url).digest("hex");
+  } else {
+    url = url.replace(INVALID_FILENAME_CHARS, "-");
+  }
+
+  const filePrefix = path.join(directory, `${counter ? `${counter}.` : ""}${method.toLocaleLowerCase()}.${url}`);
+  const files = {
+    request: `${filePrefix}.req.json`,
+    js: `${filePrefix}.js`,
+    options: `${filePrefix}.json`,
+    content: `${filePrefix}.content`,
+  };
+
+  return files;
+};
 
 const mockMiddleware = async (ctx) => {
   const response = { status: 500, headers: {}, body: "", delay: 0 };
 
   if (session.name) {
-    const { originalUrl } = ctx;
-    const parsedUrl = originalUrl.substring(1).replace(/\//g, SLASH_SEPARATOR) || SLASH_SEPARATOR;
+    const { originalUrl, request } = ctx;
+    const ip = session.groupByIP ? request.ip : "0.0.0.0";
 
-    if (!session.repeat) session.requestCounter++;
+    if (!session.repeat){
+      if (session.requestCounter[ip] == undefined) session.requestCounter[ip] = 0
+      session.requestCounter[ip]++;
+    } 
+
+    const requestCounter = session.requestCounter[ip];
 
     let requestDirectory = session.proxy ? proxy.recordingDirectory : config.sessionsDirectory;
     requestDirectory = path.join(requestDirectory, session.name);
     await createDirectoryIfNotExists(requestDirectory);
 
-    const filePrefix = path.join(
-      requestDirectory,
-      `${!session.repeat ? `${session.requestCounter}.` : ""}${ctx.method.toLocaleLowerCase()}.${parsedUrl}`,
-    );
-    const files = {
-      request: `${filePrefix}.request.json`,
-      js: `${filePrefix}.js`,
-      options: `${filePrefix}.json`,
-      content: `${filePrefix}.content`,
-    };
+    const files = buildFilenames({
+      counter: session.repeat ? null : requestCounter,
+      directory: requestDirectory,
+      method: ctx.method,
+      url: originalUrl,
+    });
 
     if (session.logRequest) await logRequest(ctx, files);
 
