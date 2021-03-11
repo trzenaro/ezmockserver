@@ -131,7 +131,7 @@ const handleProxyRequest = async (ctx, files) => {
           url: ctx.originalUrl,
           baseURL: route.proxyPass,
           headers: proxyHeaders,
-          ...(ctx.body ? { data: ctx.body } : null),
+          ...(ctx.request.body ? { data: ctx.request.body } : null),
           validateStatus: () => true,
         });
         const timeEnd = new Date();
