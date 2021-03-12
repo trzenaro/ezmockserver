@@ -7,5 +7,6 @@ sessionRouter.post("/sessions/current", sessionController.activateSession);
 sessionRouter.delete("/sessions/current", sessionController.deactivateCurrentSession);
 sessionRouter.get("/sessions/current", sessionController.getCurrentSession);
 sessionRouter.post("/sessions", sessionController.addSessions);
+sessionRouter.get("/session/:sessionName", sessionController.downloadSession);
 
 module.exports = sessionRouter;

@@ -1,13 +1,9 @@
 FROM node:lts-alpine
 
-COPY . /app
+RUN npm i -g ezmockserver
 
-RUN \
-  cd /app && \
-  npm install --production
-
-WORKDIR /app/mockserver
+WORKDIR /ezmockserver
 
 EXPOSE 3000 3050
 
-CMD ["node", "../src/index.js"]
+CMD ["ezmockserver"]

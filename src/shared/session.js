@@ -1,10 +1,9 @@
 module.exports = {
   name: "",
-  fileType: "json",
+  fileType: "content",
   repeat: false,
   logRequest: true,
-  proxy: false,
-  groupByIP: true,
-  requestCounter: { "0.0.0.0": 0 },
-  requiredFiles: [],
+  groupResponsesByIp: false,
+  _requestCounter: { "0.0.0.0": 0 },
+  _requiredFiles: [],
 };

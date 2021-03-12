@@ -37,16 +37,16 @@ const mockMiddleware = async (ctx) => {
 
   if (session.name) {
     const { originalUrl, request } = ctx;
-    const ip = session.groupByIP ? request.ip : "0.0.0.0";
+    const ip = session.groupResponsesByIp ? request.ip : "0.0.0.0";
 
-    if (!session.repeat){
-      if (session.requestCounter[ip] == undefined) session.requestCounter[ip] = 0
-      session.requestCounter[ip]++;
-    } 
+    if (!session.repeat) {
+      if (session._requestCounter[ip] == undefined) session._requestCounter[ip] = 0;
+      session._requestCounter[ip]++;
+    }
 
-    const requestCounter = session.requestCounter[ip];
+    const requestCounter = session._requestCounter[ip];
 
-    let requestDirectory = session.proxy ? proxy.recordingDirectory : config.sessionsDirectory;
+    let requestDirectory = config.sessionsDirectory;
     requestDirectory = path.join(requestDirectory, session.name);
     await createDirectoryIfNotExists(requestDirectory);
 
@@ -60,22 +60,12 @@ const mockMiddleware = async (ctx) => {
     if (session.logRequest) await logRequest(ctx, files);
 
     try {
-      if (session.proxy) {
-        const proxyResponse = await handleProxyRequest(ctx, files);
-        Object.assign(response, proxyResponse);
-      } else {
-        const mockResponse = await handleMockRequest(ctx, files);
-        Object.assign(response, mockResponse);
-      }
+      const mockResponse = await handleMockRequest(ctx, files);
+      Object.assign(response, mockResponse);
     } catch (error) {
       if (error.code === "ENOENT" || error.code == "MODULE_NOT_FOUND") {
-        if (error.code === "ENOENT") {
-          await createFiles([{ name: files.options }, { name: files.content }]);
-        }
-
-        if (error.code === "MODULE_NOT_FOUND") {
-          await createFiles([{ name: files.js }]);
-        }
+        const proxyResponse = await handleProxyRequest(ctx, files);
+        Object.assign(response, proxyResponse);
       } else {
         throw error;
       }
@@ -131,7 +121,7 @@ const handleProxyRequest = async (ctx, files) => {
           url: ctx.originalUrl,
           baseURL: route.proxyPass,
           headers: proxyHeaders,
-          ...(ctx.request.body ? { data: ctx.request.body } : null),
+          ...(ctx.type ? { data: ctx.request.body } : null),
           validateStatus: () => true,
         });
         const timeEnd = new Date();
@@ -169,12 +159,15 @@ const handleProxyRequest = async (ctx, files) => {
 const handleMockRequest = async (ctx, files) => {
   const response = {};
 
-  if (session.fileType == "js") {
+  if (session.fileType == "script") {
     const jsFile = require(files.js);
-    session.requiredFiles.push(files.js);
+    session._requiredFiles.push(files.js);
     Object.assign(response, jsFile.execute(ctx));
   } else {
-    const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([fsPromises.readFile(files.options), fsPromises.readFile(files.content)]);
+    const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([
+      fsPromises.readFile(files.options),
+      fsPromises.readFile(files.content),
+    ]);
 
     const responseOptions = JSON.parse(responseOptionsBuffer);
     Object.assign(response, responseOptions, { body: responseDataBuffer });

@@ -1,8 +1,9 @@
 const fs = require("fs");
+const path = require("path");
 const unzipper = require('unzipper');
 const { sessionsDirectory } = require("../../config/config");
 const session = require("../../shared/session");
-const { deleteFile, listSubdirectories } = require('../../utils/fs');
+const { deleteFile, listSubdirectories, zipDirectory } = require('../../utils/fs');
 
 
 const getSessions = async (ctx) => {
@@ -13,20 +14,20 @@ const getSessions = async (ctx) => {
 };
 
 const activateSession = async (ctx) => {
-  const { requiredFiles } = session;
+  const { _requiredFiles } = session;
   const { body } = ctx.request;
   
   Object.assign(session, {
     name: body.name,
-    fileType: body.fileType || "json",
-    repeat: body.repeat || false,
-    proxy: body.proxy || false,
-    groupByIP: body.groupByIP || true,
-    requestCounter: { "0.0.0.0": 0 },
-    requiredFiles: [],
+    fileType: body.fileType || "content",
+    logRequest: ('logRequest' in body ) ? body.logRequest : true,
+    repeat: ('repeat' in body ) ? body.repeat : false,
+    groupResponsesByIp: ('groupResponsesByIp' in body ) ? body.groupResponsesByIp : false,
+    _requestCounter: { "0.0.0.0": 0 },
+    _requiredFiles: [],
   });
 
-  requiredFiles.forEach((filePath) => delete require.cache[filePath]);
+  _requiredFiles.forEach((filePath) => delete require.cache[filePath]);
 
   ctx.status = 204;
 };
@@ -49,10 +50,21 @@ const addSessions = async (ctx) => {
   ctx.status = 201;
 };
 
+const downloadSession = async (ctx) => {
+  const { sessionName } = ctx.request.params;
+  const sessionDirectory = path.join(sessionsDirectory, sessionName);
+
+  ctx.status = 200;
+  ctx.type = "application/zip";
+  ctx.attachment(`${sessionName}.zip`);
+  ctx.body = zipDirectory(sessionDirectory);
+};
+
 module.exports = {
   getSessions,
   activateSession,
   deactivateCurrentSession,
   getCurrentSession,
   addSessions,
+  downloadSession
 };

@@ -1,9 +1,15 @@
 #!/usr/bin/env node
-require('dotenv').config();
+require("dotenv").config();
 const api = require("./api/api");
 const server = require("./server/server");
 
-process.on('SIGINT', () => process.exit(0))
+process.on("SIGINT", () => process.exit(0));
 
-api.init();
-server.init();
+(async () => {
+  try {
+    await api.init();
+    await server.init();
+  } catch (error) {
+    process.exit(0);
+  }
+})();

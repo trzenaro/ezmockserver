@@ -1,6 +1,6 @@
 {
   "name": "ezmockserver",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Simple javascript based mockserver",
   "files": [
     "src"
@@ -29,5 +29,6 @@
   "devDependencies": {
     "eslint": "^7.19.0",
     "prettier": "^2.2.1"
-  }
+  },
+  "homepage": "https://github.com/trzenaro/ezmockserver"
 }

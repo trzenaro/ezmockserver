@@ -1,5 +1,4 @@
-sessions
 node_modules
 .env
-vivo
-mockserver
+ezmockserver
+tmp

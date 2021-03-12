@@ -1,15 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: trzenaro-mockserver
+  name: ezmockserver
 data:
-  mockserverConfig: |-
+  ezmockserverConfig: |-
     {
       "sessionsDirectory": "./sessions",
       "api": { "port": 3050 },
       "server": { "port": 3000 },
       "proxy": {
-        "recordingDirectory": "./proxy",
         "prefix": [
           { "path": "/path-one", "proxyPass": "https://server-one.com" },
           { "path": "/path-two", "proxyPass": "https://server-two.com" },
@@ -22,21 +21,21 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: trzenaro-mockserver
+  name: ezmockserver
 spec:
   selector:
     matchLabels:
-      app: trzenaro-mockserver
-  serviceName: trzenaro-mockserver
+      app: ezmockserver
+  serviceName: ezmockserver
   replicas: 1
   template:
     metadata:
       labels:
-        app: trzenaro-mockserver
+        app: ezmockserver
     spec:
       containers:
-        - name: trzenaro-mockserver
-          image: trzenaro/ezmockserver:0.1.0
+        - name: ezmockserver
+          image: trzenaro/ezmockserver:0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -50,28 +49,28 @@ spec:
               cpu: "500m"
           volumeMounts:
             - name: sessions-data
-              mountPath: /app/mockserver/sessions
+              mountPath: /app/ezmockserver/sessions
             - name: proxy-data
-              mountPath: /app/mockserver/proxy
-            - name: mockserver-config
-              mountPath: /app/mockserver/mockserver.json
-              subPath: mockserverConfig
+              mountPath: /app/ezmockserver/proxy
+            - name: ezmockserver-config
+              mountPath: /app/ezmockserver/ezmockserver.json
+              subPath: ezmockserverConfig
       volumes:
         - name: sessions-data
           emptyDir: {}
         - name: proxy-data
           emptyDir: {}
-        - name: mockserver-config
+        - name: ezmockserver-config
           configMap:
-            name: trzenaro-mockserver
+            name: ezmockserver
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: trzenaro-mockserver
+  name: ezmockserver
   labels:
-    app: trzenaro-mockserver
+    app: ezmockserver
 spec:
   ports:
     - port: 3000
@@ -83,26 +82,26 @@ spec:
       name: api
       targetPort: 3050
   selector:
-    app: trzenaro-mockserver
+    app: ezmockserver
 
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: trzenaro-mockserver
+  name: ezmockserver
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   rules:
     - http:
         paths:
-          - path: /mockserver/server(/|$)(.*)
+          - path: /ezmockserver/server(/|$)(.*)
             backend:
-              serviceName: trzenaro-mockserver
+              serviceName: ezmockserver
               servicePort: 3000
             pathType: Prefix
-          - path: /mockserver/api(/|$)(.*)
+          - path: /ezmockserver/api(/|$)(.*)
             backend:
-              serviceName: trzenaro-mockserver
+              serviceName: ezmockserver
               servicePort: 3050
             pathType: Prefix
