@@ -14,7 +14,10 @@ const INVALID_FILENAME_CHARS = /<|>|:|"|\/|\\|\||\?|\*/g;
 const buildFilenames = (fileSettings) => {
   let { directory, counter, method, url } = fileSettings;
 
-  url = url.substring(1);
+  if (url.charAt(0) === "/") {
+    url = url.substring(1);
+  }
+
   if (url.length > MAX_URL_FILE_LENGTH) {
     url = crypto.createHash("md5").update(url).digest("hex");
   } else {
@@ -102,55 +105,48 @@ const logRequest = async (ctx, files) => {
 };
 
 const handleProxyRequest = async (ctx, files) => {
+  /// TODO
+  /// REFACTOR TO REMOVE DUPLICATED CODE!!!
   const response = {};
+  try {
+    const proxyHeaders = { ...ctx.headers };
+    delete proxyHeaders.host;
 
-  for (const route of proxy.prefix) {
-    if (ctx.originalUrl.startsWith(route.path)) {
-      const proxyHeaders = { ...ctx.headers };
-      delete proxyHeaders.host;
+    const axiosRequest = {
+      method: ctx.method,
+      url: ctx.originalUrl,
+      headers: proxyHeaders,
+      ...(ctx.method !== "GET" ? { data: ctx.request.body } : null),
+      validateStatus: () => true,
+    };
 
-      try {
-        let url = ctx.originalUrl;
-        if (route.rewrite) {
-          url = url.replace(route.path, route.rewrite);
+    // It is a FQDN proxy request
+    if (ctx.originalUrl.charAt(0) !== "/") {
+      const axiosResponse = await callProxyServer(axiosRequest, files);
+      response.status = axiosResponse.status;
+      response.body = axiosResponse.data;
+      response.headers = axiosResponse.headers;
+    } else {
+      // It is a path based proxy request
+      for (const route of proxy.prefix) {
+        if (ctx.originalUrl.startsWith(route.path)) {
+          let url = ctx.originalUrl;
+          if (route.rewrite) {
+            url = url.replace(route.path, route.rewrite);
+          }
+
+          axiosRequest.url = url;
+          axiosRequest.baseURL = route.proxyPass;
+          const axiosResponse = await callProxyServer(axiosRequest, files);
+          response.status = axiosResponse.status;
+          response.body = axiosResponse.data;
+          response.headers = axiosResponse.headers;
+          break;
         }
-
-        const timeStart = new Date();
-        const axiosResponse = await axios.request({
-          method: ctx.method,
-          url: ctx.originalUrl,
-          baseURL: route.proxyPass,
-          headers: proxyHeaders,
-          ...(ctx.type ? { data: ctx.request.body } : null),
-          validateStatus: () => true,
-        });
-        const timeEnd = new Date();
-        await Promise.all([
-          createFiles([
-            {
-              name: files.options,
-              data: {
-                delay: timeEnd - timeStart,
-                status: axiosResponse.status,
-                headers: axiosResponse.headers,
-              },
-            },
-            {
-              name: files.content,
-              data: axiosResponse.data,
-            },
-          ]),
-        ]);
-
-        response.status = axiosResponse.status;
-        response.body = axiosResponse.data;
-        response.headers = axiosResponse.headers;
-      } catch (error) {
-        console.log(error);
       }
-
-      break;
     }
+  } catch (error) {
+    console.log(error);
   }
 
   return response;
@@ -174,6 +170,29 @@ const handleMockRequest = async (ctx, files) => {
   }
 
   return response;
+};
+
+const callProxyServer = async (axiosRequest, files) => {
+  const timeStart = new Date();
+  const axiosResponse = await axios.request(axiosRequest);
+  const timeEnd = new Date();
+  await Promise.all([
+    createFiles([
+      {
+        name: files.options,
+        data: {
+          delay: timeEnd - timeStart,
+          status: axiosResponse.status,
+          headers: axiosResponse.headers,
+        },
+      },
+      {
+        name: files.content,
+        data: axiosResponse.data,
+      },
+    ]),
+  ]);
+  return axiosResponse;
 };
 
 module.exports = mockMiddleware;
