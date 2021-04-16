@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { promises: fsPromises } = require("fs");
+const qs = require("qs");
 const path = require("path");
 const axios = require("axios").default;
 const config = require("../../config/config");
@@ -105,8 +106,6 @@ const logRequest = async (ctx, files) => {
 };
 
 const handleProxyRequest = async (ctx, files) => {
-  /// TODO
-  /// REFACTOR TO REMOVE DUPLICATED CODE!!!
   const response = {};
   try {
     const proxyHeaders = { ...ctx.headers };
@@ -122,26 +121,28 @@ const handleProxyRequest = async (ctx, files) => {
 
     // It is a FQDN proxy request
     if (ctx.originalUrl.charAt(0) !== "/") {
-      const axiosResponse = await callProxyServer(axiosRequest, files);
+      const axiosResponse = await requestProxyServer(axiosRequest, files);
       response.status = axiosResponse.status;
       response.body = axiosResponse.data;
       response.headers = axiosResponse.headers;
     } else {
-      // It is a path based proxy request
-      for (const route of proxy.prefix) {
-        if (ctx.originalUrl.startsWith(route.path)) {
-          let url = ctx.originalUrl;
-          if (route.rewrite) {
-            url = url.replace(route.path, route.rewrite);
-          }
+      if (proxy.prefix) {
+        // It is a path based proxy request
+        for (const route of proxy.prefix) {
+          if (ctx.originalUrl.startsWith(route.path)) {
+            let url = ctx.originalUrl;
+            if (route.rewrite) {
+              url = url.replace(route.path, route.rewrite);
+            }
 
-          axiosRequest.url = url;
-          axiosRequest.baseURL = route.proxyPass;
-          const axiosResponse = await callProxyServer(axiosRequest, files);
-          response.status = axiosResponse.status;
-          response.body = axiosResponse.data;
-          response.headers = axiosResponse.headers;
-          break;
+            axiosRequest.url = url;
+            axiosRequest.baseURL = route.proxyPass;
+            const axiosResponse = await requestProxyServer(axiosRequest, files);
+            response.status = axiosResponse.status;
+            response.body = axiosResponse.data;
+            response.headers = axiosResponse.headers;
+            break;
+          }
         }
       }
     }
@@ -172,9 +173,13 @@ const handleMockRequest = async (ctx, files) => {
   return response;
 };
 
-const callProxyServer = async (axiosRequest, files) => {
+const requestProxyServer = async (axiosRequest, files) => {
   const timeStart = new Date();
+  if (axiosRequest.headers["content-type"] && axiosRequest.headers["content-type"].indexOf("form-urlencoded") > -1) {
+    axiosRequest.data = qs.stringify(axiosRequest.data);
+  }
   const axiosResponse = await axios.request(axiosRequest);
+
   const timeEnd = new Date();
   await Promise.all([
     createFiles([
