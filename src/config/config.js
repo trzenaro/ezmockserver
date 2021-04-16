@@ -6,7 +6,7 @@ const settingsFile = fs.readFileSync(settingsPath);
 const settings = JSON.parse(settingsFile);
 
 let sessionsDirectory = settings.sessionsDirectory;
-if (!path.isAbsolute(settings.sessionsDirectory)){
+if (!path.isAbsolute(settings.sessionsDirectory)) {
   sessionsDirectory = path.join(path.dirname(settingsPath), settings.sessionsDirectory);
 }
 
@@ -19,8 +19,9 @@ const config = {
     port: settings.api.port,
   },
   proxy: {
-    ...settings.proxy
-  }
+    ...settings.proxy,
+  },
+  defaultSession: settings.defaultSession || null,
 };
 
 module.exports = config;
