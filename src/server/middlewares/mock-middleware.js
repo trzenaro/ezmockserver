@@ -77,10 +77,12 @@ const mockMiddleware = async (ctx) => {
   }
 
   ctx.status = response.status;
+  ctx.body = response.body;
+  ctx.remove('Content-Length'); // remove content-length set by ctx.body to avoid conflicting with proxied headers;
   Object.entries(response.headers || {}).forEach(([header, headerValue]) => {
     ctx.set(header, headerValue);
   });
-  ctx.body = response.body;
+  
   if (response.delay) await sleep(response.delay);
 };
 
