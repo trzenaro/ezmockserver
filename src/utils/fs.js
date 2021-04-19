@@ -16,8 +16,8 @@ const createFiles = (files) => {
   return Promise.all(
     files.map((file) => {
       let data = file.data || "";
-      if (_.isObject(file.data)) {
-        data = JSON.stringify(file.data, null, 2);
+      if (!(data instanceof Buffer) && _.isObject(data)) {
+        data = JSON.stringify(data, null, 2);
       }
       return fsPromises.writeFile(file.name, data);
     }),

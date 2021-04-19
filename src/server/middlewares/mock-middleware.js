@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const { promises: fsPromises } = require("fs");
 const qs = require("qs");
 const path = require("path");
-const axios = require("axios").default;
+const fetch = require("node-fetch");
 const config = require("../../config/config");
 const { createDirectoryIfNotExists, createFiles } = require("../../utils/fs");
 const session = require("../../shared/session");
@@ -36,26 +36,37 @@ const buildFilenames = (fileSettings) => {
   return files;
 };
 
+const getRequestCounter = (ctx) => {
+  const requestId = `${ctx.method}|${ctx.originalUrl}`;
+
+  const ip = session.groupResponsesByIp ? ctx.request.ip : "0.0.0.0";
+  if (!session._requestCounter[ip]) session._requestCounter[ip] = { total: 0, requests: {} };
+
+  requestsAggregator = session._requestCounter[ip];
+
+  session._requestCounter[ip].total++;
+  if (session._requestCounter[ip].requests[requestId] == undefined) session._requestCounter[ip].requests[requestId] = 0;
+
+  session._requestCounter[ip].requests[requestId]++;
+
+  if (session.countMode === "NO_COUNT") return null;
+  if (session.countMode === "COUNT_ALL") return session._requestCounter[ip].total;
+  if (session.countMode === "COUNT_BY_REQUEST_URL") return session._requestCounter[ip].requests[requestId];
+};
+
 const mockMiddleware = async (ctx) => {
   const response = { status: 500, headers: {}, body: "", delay: 0 };
 
   if (session.name) {
-    const { originalUrl, request } = ctx;
-    const ip = session.groupResponsesByIp ? request.ip : "0.0.0.0";
+    const { originalUrl } = ctx;
 
-    if (!session.repeat) {
-      if (session._requestCounter[ip] == undefined) session._requestCounter[ip] = 0;
-      session._requestCounter[ip]++;
-    }
+    const requestCounter = getRequestCounter(ctx);
 
-    const requestCounter = session._requestCounter[ip];
-
-    let requestDirectory = config.sessionsDirectory;
-    requestDirectory = path.join(requestDirectory, session.name);
+    requestDirectory = path.join(config.sessionsDirectory, session.name);
     await createDirectoryIfNotExists(requestDirectory);
 
     const files = buildFilenames({
-      counter: session.repeat ? null : requestCounter,
+      counter: requestCounter,
       directory: requestDirectory,
       method: ctx.method,
       url: originalUrl,
@@ -68,21 +79,24 @@ const mockMiddleware = async (ctx) => {
       Object.assign(response, mockResponse);
     } catch (error) {
       if (error.code === "ENOENT" || error.code == "MODULE_NOT_FOUND") {
-        const proxyResponse = await handleProxyRequest(ctx, files);
-        Object.assign(response, proxyResponse);
+        const destinationResponse = await handleRequestAsProxy(ctx, files);
+        Object.assign(response, destinationResponse);
       } else {
         throw error;
       }
     }
+  } else {
+    console.warn("No session started");
   }
 
   ctx.status = response.status;
   ctx.body = response.body;
-  ctx.remove('Content-Length'); // remove content-length set by ctx.body to avoid conflicting with proxied headers;
+  ctx.remove("Content-Length"); // remove content-length set by ctx.body to avoid conflicting with proxied headers;
   Object.entries(response.headers || {}).forEach(([header, headerValue]) => {
     ctx.set(header, headerValue);
   });
-  
+  ctx.remove("Content-Encoding"); // remove content-encoding since node-fetch already does the job
+
   if (response.delay) await sleep(response.delay);
 };
 
@@ -107,27 +121,28 @@ const logRequest = async (ctx, files) => {
   );
 };
 
-const handleProxyRequest = async (ctx, files) => {
+const handleRequestAsProxy = async (ctx, files) => {
   const response = {};
   try {
-    const proxyHeaders = { ...ctx.headers };
-    delete proxyHeaders.host;
-
-    const axiosRequest = {
-      method: ctx.method,
+    const destinationRequest = {
       url: ctx.originalUrl,
-      headers: proxyHeaders,
-      ...(ctx.method !== "GET" ? { data: ctx.request.body } : null),
-      validateStatus: () => true,
+      method: ctx.method,
+      headers: {},
+      body: ctx.method !== "GET" ? ctx.request.body : null,
     };
 
-    // It is a FQDN proxy request
-    if (ctx.originalUrl.charAt(0) !== "/") {
-      const axiosResponse = await requestProxyServer(axiosRequest, files);
-      response.status = axiosResponse.status;
-      response.body = axiosResponse.data;
-      response.headers = axiosResponse.headers;
-    } else {
+    const destinationHeaders = { ...ctx.headers };
+    delete destinationHeaders.host;
+    destinationRequest.headers = destinationHeaders;
+
+    if (ctx.is("urlencoded")) {
+      destinationRequest.body = qs.stringify(ctx.request.body);
+    } else if (ctx.is("json")) {
+      destinationRequest.body = JSON.stringify(ctx.request.body);
+    }
+
+    let performRequest = false;
+    if (ctx.originalUrl.charAt(0) === "/") {
       if (proxy.prefix) {
         // It is a path based proxy request
         for (const route of proxy.prefix) {
@@ -137,17 +152,23 @@ const handleProxyRequest = async (ctx, files) => {
               url = url.replace(route.path, route.rewrite);
             }
 
-            axiosRequest.url = url;
-            axiosRequest.baseURL = route.proxyPass;
-            const axiosResponse = await requestProxyServer(axiosRequest, files);
-            response.status = axiosResponse.status;
-            response.body = axiosResponse.data;
-            response.headers = axiosResponse.headers;
+            destinationRequest.url = `${route.proxyPass}${ctx.url}`;
+            performRequest = true;
             break;
           }
         }
       }
+    } else {
+      // It is a FQDN request
+      performRequest = true;
     }
+
+    if (!performRequest) throw new Error("No routes found to proxy the request");
+
+    const destinationResponse = await requestDestinationServer(destinationRequest, files);
+    response.status = destinationResponse.status;
+    response.body = destinationResponse.body;
+    response.headers = destinationResponse.headers;
   } catch (error) {
     console.log(error);
   }
@@ -175,31 +196,37 @@ const handleMockRequest = async (ctx, files) => {
   return response;
 };
 
-const requestProxyServer = async (axiosRequest, files) => {
-  const timeStart = new Date();
-  if (axiosRequest.headers["content-type"] && axiosRequest.headers["content-type"].indexOf("form-urlencoded") > -1) {
-    axiosRequest.data = qs.stringify(axiosRequest.data);
-  }
-  const axiosResponse = await axios.request(axiosRequest);
+const requestDestinationServer = async (destinationRequest, files) => {
+  const { url, ...fetchRequest } = destinationRequest;
 
+  const timeStart = new Date();
+  const fetchResponse = await fetch(url, { ...fetchRequest, redirect: "manual" });
   const timeEnd = new Date();
+
+  const response = {
+    status: fetchResponse.status,
+    headers: fetchResponse.headers.raw(),
+    body: await fetchResponse.buffer(),
+  };
+
   await Promise.all([
     createFiles([
       {
         name: files.options,
         data: {
           delay: timeEnd - timeStart,
-          status: axiosResponse.status,
-          headers: axiosResponse.headers,
+          status: response.status,
+          headers: response.headers,
         },
       },
       {
         name: files.content,
-        data: axiosResponse.data,
+        data: response.body,
       },
     ]),
   ]);
-  return axiosResponse;
+
+  return response;
 };
 
 module.exports = mockMiddleware;

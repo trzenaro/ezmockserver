@@ -1,19 +1,22 @@
-const path = require('path');
+const path = require("path");
 const unzipper = require("unzipper");
 const { sessionsDirectory } = require("../../config/config");
 const { deleteFile, listSubdirectories, zipDirectory } = require("../../utils/fs");
 const session = require("../../shared/session");
 
+// NO_COUNT
+// COUNT_BY_REQUEST_URL
+// COUNT_ALL
 const activateSession = async (newSession) => {
   const { _requiredFiles } = session;
-  
+
   Object.assign(session, {
     name: newSession.name,
     fileType: newSession.fileType || "content",
-    logRequest: ('logRequest' in newSession ) ? newSession.logRequest : true,
-    repeat: ('repeat' in newSession ) ? newSession.repeat : false,
-    groupResponsesByIp: ('groupResponsesByIp' in newSession ) ? newSession.groupResponsesByIp : false,
-    _requestCounter: { "0.0.0.0": 0 },
+    logRequest: "logRequest" in newSession ? newSession.logRequest : true,
+    countMode: "countMode" in newSession ? newSession.countMode : "COUNT_ALL",
+    groupResponsesByIp: "groupResponsesByIp" in newSession ? newSession.groupResponsesByIp : false,
+    _requestCounter: { "0.0.0.0": { total: 0, requests: {} } },
     _requiredFiles: [],
   });
 
@@ -41,7 +44,6 @@ const downloadSession = async (sessionName) => {
   return zipDirectory(sessionDirectory);
 };
 
-
 module.exports = {
   activateSession,
   deactivateCurrentSession,
@@ -49,4 +51,4 @@ module.exports = {
   getSessions,
   addSessions,
   downloadSession,
-}
+};
