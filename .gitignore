@@ -3,3 +3,4 @@ node_modules
 ezmockserver
 tmp
 ezmockserver.json
+*.req.json

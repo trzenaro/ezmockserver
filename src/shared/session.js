@@ -3,7 +3,7 @@ module.exports = {
   fileType: "content",
   countMode: "COUNT_ALL",
   logRequest: true,
-  groupResponsesByIp: false,
+  groupResponsesByIp: true,
   _requestCounter: { "0.0.0.0": 0 },
   _requiredFiles: [],
 };

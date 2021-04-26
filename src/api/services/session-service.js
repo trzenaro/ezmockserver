@@ -4,9 +4,6 @@ const { sessionsDirectory } = require("../../config/config");
 const { deleteFile, listSubdirectories, zipDirectory } = require("../../utils/fs");
 const session = require("../../shared/session");
 
-// NO_COUNT
-// COUNT_BY_REQUEST_URL
-// COUNT_ALL
 const activateSession = async (newSession) => {
   const { _requiredFiles } = session;
 
@@ -15,7 +12,7 @@ const activateSession = async (newSession) => {
     fileType: newSession.fileType || "content",
     logRequest: "logRequest" in newSession ? newSession.logRequest : true,
     countMode: "countMode" in newSession ? newSession.countMode : "COUNT_ALL",
-    groupResponsesByIp: "groupResponsesByIp" in newSession ? newSession.groupResponsesByIp : false,
+    groupResponsesByIp: "groupResponsesByIp" in newSession ? newSession.groupResponsesByIp : true,
     _requestCounter: { "0.0.0.0": { total: 0, requests: {} } },
     _requiredFiles: [],
   });

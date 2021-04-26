@@ -1,0 +1,7 @@
+{
+  "status": 403,
+  "delay": 500,
+  "headers": {
+    "content-type": "text/html"
+  }
+}

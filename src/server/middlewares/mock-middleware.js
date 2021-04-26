@@ -152,7 +152,7 @@ const handleRequestAsProxy = async (ctx, files) => {
               url = url.replace(route.path, route.rewrite);
             }
 
-            destinationRequest.url = `${route.proxyPass}${ctx.url}`;
+            destinationRequest.url = `${route.proxyPass}${url}`;
             performRequest = true;
             break;
           }

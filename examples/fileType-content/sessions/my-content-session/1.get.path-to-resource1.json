@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "delay": 1000,
+  "headers": {
+    "response-header-1": "value-of-response-header-1"
+  }
+}
