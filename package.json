@@ -1,9 +1,10 @@
 {
   "name": "ezmockserver",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Simple javascript based mockserver",
   "files": [
-    "src"
+    "src",
+    "certs"
   ],
   "main": "src/index.js",
   "bin": {

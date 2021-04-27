@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "delay": 3000,
+  "headers": {
+    "content-type": "application/json"
+  }
+}

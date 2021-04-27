@@ -13,10 +13,12 @@ if (!path.isAbsolute(settings.sessionsDirectory)) {
 const config = {
   sessionsDirectory,
   server: {
-    port: settings.server.port,
+    httpPort: settings.server.httpPort,
+    httpsPort: settings.server.httpsPort,
   },
   api: {
-    port: settings.api.port,
+    httpPort: settings.api.httpPort,
+    httpsPort: settings.api.httpsPort,
   },
   proxy: {
     ...settings.proxy,

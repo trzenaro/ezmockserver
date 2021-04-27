@@ -5,11 +5,13 @@
 // ezmockserver.json
 {
   "sessionsDirectory": "./sessions",
-  "api": {
-    "port": 3050
+  "api": { // one of httpPort|httpsPort must be provided
+    "httpPort": 3050,
+    "httpsPort": 3051,
   },
-  "server": {
-    "port": 3000
+  "server": { // one of httpPort|httpsPort must be provided
+    "httpPort": 3000,
+    "httpsPort": 3001,
   },
   "proxy": { // optional
     "prefix": [
@@ -18,13 +20,37 @@
       { "path": "/path-three", "proxyPass": "https://server-three.com", "rewrite": "/" }
     ]
   },
-  "defaultSession":{ // optional
+  "defaultSession": { // optional
     "name": "my-session",
     "fileType": "content",
     "logRequest": true,
     "countMode": "COUNT_ALL",
     "groupResponsesByIp": true,
-  }
+    "matchers": [ // optional
+      {
+        "name": "users-with-id-route",
+        "method": "^GET$", // regex
+        "url": "/users/\\d+" // regex
+      },
+      {
+        "name": "any-other-routes",
+        "method": "^(GET|POST|PUT|DELETE)$",
+        "url": "/.*"
+      }
+    ]
+  },
+  "defaultMatchers": [
+    {
+      "name": "users-with-id-route",
+      "method": "^GET$", // regex
+      "url": "/users/\\d+" // regex
+    },
+    {
+      "name": "any-other-routes",
+      "method": "^(GET|POST|PUT|DELETE)$",
+      "url": "/.*"
+    }
+  ]
 }
 ```
 
@@ -136,6 +162,24 @@ Default: **true**
 
 <br/>
 
+**matchers**:\
+Matchers is an easy way of intercepting/responding to requests applying regex patterns on http method and url\
+Optional\
+default: **[]**
+
+Any matcher should follow this object
+```json
+{
+  "name": "matcher-for-my-regex",
+  "method": "(GET|POST)", // regex to apply to the http method
+  "url": "/my/url/\\d+/regex/.*" // regex to apply to the path
+}
+```
+
+If **matcher** is not provided, the server will use **defaultMatchers** from configuration file.
+
+<br/>
+
 ## Checkout examples [here](./examples).
 
 <br/>
@@ -150,4 +194,22 @@ docker run --rm \
   -p 3000:3000 \
   -p 3050:3050 \
   trzenaro/ezmockserver:latest
+```
+
+<br/>
+
+## Self-signed certificate
+
+ezmockserver has a built-in self-signed certificate to respond to HTTPS connections for localhost
+
+```sh
+openssl req \
+  -newkey rsa:4096 \
+  -x509 \
+  -sha256 \
+  -days 3650 \
+  -nodes \
+  -out certs/localhost.crt \
+  -keyout certs/localhost.key \
+  -subj "/C=BR/ST=Sao Paulo/L=Sao Jose do Rio Preto/O=ezmockserver/OU=development/CN=localhost"
 ```

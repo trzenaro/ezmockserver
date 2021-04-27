@@ -6,8 +6,8 @@ data:
   ezmockserverConfig: |-
     {
       "sessionsDirectory": "./sessions",
-      "api": { "port": 3050 },
-      "server": { "port": 3000 },
+      "api": { "httpPort": 3050 },
+      "server": { "httpPort": 3001 },
       "proxy": {
         "prefix": [
           { "path": "/path-one", "proxyPass": "https://server-one.com" },
@@ -50,15 +50,11 @@ spec:
           volumeMounts:
             - name: sessions-data
               mountPath: /app/ezmockserver/sessions
-            - name: proxy-data
-              mountPath: /app/ezmockserver/proxy
             - name: ezmockserver-config
               mountPath: /app/ezmockserver/ezmockserver.json
               subPath: ezmockserverConfig
       volumes:
         - name: sessions-data
-          emptyDir: {}
-        - name: proxy-data
           emptyDir: {}
         - name: ezmockserver-config
           configMap:
