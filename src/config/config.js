@@ -22,6 +22,7 @@ const config = {
     ...settings.proxy,
   },
   defaultSession: settings.defaultSession || null,
+  defaultMatchers: settings.defaultMatchers || [],
 };
 
 module.exports = config;

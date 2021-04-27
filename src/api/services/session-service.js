@@ -3,6 +3,7 @@ const unzipper = require("unzipper");
 const { sessionsDirectory } = require("../../config/config");
 const { deleteFile, listSubdirectories, zipDirectory } = require("../../utils/fs");
 const session = require("../../shared/session");
+const config = require("../../config/config");
 
 const activateSession = async (newSession) => {
   const { _requiredFiles } = session;
@@ -13,6 +14,7 @@ const activateSession = async (newSession) => {
     logRequest: "logRequest" in newSession ? newSession.logRequest : true,
     countMode: "countMode" in newSession ? newSession.countMode : "COUNT_ALL",
     groupResponsesByIp: "groupResponsesByIp" in newSession ? newSession.groupResponsesByIp : true,
+    matchers: "matchers" in newSession ? newSession.matchers : config.defaultMatchers,
     _requestCounter: { "0.0.0.0": { total: 0, requests: {} } },
     _requiredFiles: [],
   });

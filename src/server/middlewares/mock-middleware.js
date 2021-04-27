@@ -9,23 +9,31 @@ const session = require("../../shared/session");
 const sleep = require("../../utils/sleep");
 
 const { proxy } = config;
-const MAX_URL_FILE_LENGTH = 230;
+const MAX_FILE_LENGTH = 230;
 const INVALID_FILENAME_CHARS = /<|>|:|"|\/|\\|\||\?|\*/g;
 
 const buildFilenames = (fileSettings) => {
-  let { directory, counter, method, url } = fileSettings;
+  let { directory, counter, method, url, matcher } = fileSettings;
 
-  if (url.charAt(0) === "/") {
-    url = url.substring(1);
+  let name = url;
+
+  if (matcher) {
+    name = matcher.name;
+    method = ""; // ignore method, since it will use matcher name
+  } else if (url.charAt(0) === "/") {
+    name = url.substring(1); // omit the first slash to the name which will be assigned to the file
   }
 
-  if (url.length > MAX_URL_FILE_LENGTH) {
-    url = crypto.createHash("md5").update(url).digest("hex");
+  if (name.length > MAX_FILE_LENGTH) {
+    name = crypto.createHash("md5").update(name).digest("hex");
   } else {
-    url = url.replace(INVALID_FILENAME_CHARS, "-");
+    name = name.replace(INVALID_FILENAME_CHARS, "-");
   }
 
-  const filePrefix = path.join(directory, `${counter ? `${counter}.` : ""}${method.toLocaleLowerCase()}.${url}`);
+  counter = counter ? `${counter}.` : "";
+  method = method ? `${method.toLowerCase()}.` : "";
+
+  const filePrefix = path.join(directory, `${counter}${method}${name}`);
   const files = {
     request: `${filePrefix}.req.json`,
     js: `${filePrefix}.js`,
@@ -36,22 +44,35 @@ const buildFilenames = (fileSettings) => {
   return files;
 };
 
-const getRequestCounter = (ctx) => {
-  const requestId = `${ctx.method}|${ctx.originalUrl}`;
+const getRequestCounter = (ctx, matcher) => {
+  let requestId = `${ctx.method}|${ctx.originalUrl}`;
+  if (matcher) {
+    requestId = matcher.name;
+  }
 
   const ip = session.groupResponsesByIp ? ctx.request.ip : "0.0.0.0";
   if (!session._requestCounter[ip]) session._requestCounter[ip] = { total: 0, requests: {} };
 
   requestsAggregator = session._requestCounter[ip];
 
-  session._requestCounter[ip].total++;
-  if (session._requestCounter[ip].requests[requestId] == undefined) session._requestCounter[ip].requests[requestId] = 0;
+  requestsAggregator.total++;
+  if (requestsAggregator.requests[requestId] == undefined) requestsAggregator.requests[requestId] = 0;
 
-  session._requestCounter[ip].requests[requestId]++;
+  requestsAggregator.requests[requestId]++;
 
   if (session.countMode === "NO_COUNT") return null;
-  if (session.countMode === "COUNT_ALL") return session._requestCounter[ip].total;
-  if (session.countMode === "COUNT_BY_REQUEST_URL") return session._requestCounter[ip].requests[requestId];
+  if (session.countMode === "COUNT_ALL") return requestsAggregator.total;
+  if (session.countMode === "COUNT_BY_REQUEST_URL") return requestsAggregator.requests[requestId];
+};
+
+const findMatcher = (ctx) => {
+  const matcherFound = session.matchers.find((matcher) => {
+    if (!ctx.method.match(matcher.method)) return false;
+    if (!ctx.originalUrl.match(matcher.url)) return false;
+
+    return true;
+  });
+  return matcherFound;
 };
 
 const mockMiddleware = async (ctx) => {
@@ -60,7 +81,9 @@ const mockMiddleware = async (ctx) => {
   if (session.name) {
     const { originalUrl } = ctx;
 
-    const requestCounter = getRequestCounter(ctx);
+    const matcher = findMatcher(ctx);
+
+    const requestCounter = getRequestCounter(ctx, matcher);
 
     requestDirectory = path.join(config.sessionsDirectory, session.name);
     await createDirectoryIfNotExists(requestDirectory);
@@ -70,6 +93,7 @@ const mockMiddleware = async (ctx) => {
       directory: requestDirectory,
       method: ctx.method,
       url: originalUrl,
+      matcher,
     });
 
     if (session.logRequest) await logRequest(ctx, files);
