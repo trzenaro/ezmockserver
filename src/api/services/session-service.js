@@ -1,3 +1,4 @@
+const { promises: fsPromises } = require("fs");
 const path = require("path");
 const unzipper = require("unzipper");
 const { sessionsDirectory } = require("../../config/config");
@@ -5,8 +6,27 @@ const { deleteFile, listSubdirectories, zipDirectory } = require("../../utils/fs
 const session = require("../../shared/session");
 const config = require("../../config/config");
 
+const readSessionFromConfigFile = async (sessionName) => {
+  const sessionDirectory = path.join(config.sessionsDirectory, sessionName);
+  try {
+    const configFileBuffer = await fsPromises.readFile(path.join(sessionDirectory, ".config.json"));
+    const sessionConfig = JSON.parse(configFileBuffer);
+    delete sessionConfig.name;
+    return sessionConfig;
+  } catch (error) {
+    return null;
+  }
+};
+
 const activateSession = async (newSession) => {
   const { _requiredFiles } = session;
+
+  const sessionConfigFromFile = await readSessionFromConfigFile(newSession.name);
+  if (sessionConfigFromFile) {
+    Object.entries(sessionConfigFromFile).forEach(([key, value]) => {
+      if (!(key in newSession)) newSession[key] = value;
+    });
+  }
 
   Object.assign(session, {
     name: newSession.name,

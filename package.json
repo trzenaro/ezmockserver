@@ -1,6 +1,6 @@
 {
   "name": "ezmockserver",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Simple javascript based mockserver",
   "files": [
     "src",
