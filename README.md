@@ -1,7 +1,7 @@
 
 ## Configuration file
 
-```json
+```jsonc
 // ezmockserver.json
 {
   "sessionsDirectory": "./sessions",
@@ -168,7 +168,7 @@ Optional\
 default: **[]**
 
 Any matcher should follow this object
-```json
+```jsonc
 {
   "name": "matcher-for-my-regex",
   "method": "(GET|POST)", // regex to apply to the http method
