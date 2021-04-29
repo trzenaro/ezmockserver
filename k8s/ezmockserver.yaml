@@ -7,13 +7,16 @@ data:
     {
       "sessionsDirectory": "./sessions",
       "api": { "httpPort": 3050 },
-      "server": { "httpPort": 3001 },
+      "server": { "httpPort": 3000 },
       "proxy": {
         "prefix": [
           { "path": "/path-one", "proxyPass": "https://server-one.com" },
           { "path": "/path-two", "proxyPass": "https://server-two.com" },
           { "path": "/path-three", "proxyPass": "https://server-three.com", "rewrite": "/" }
         ]
+      },
+      "defaultSession": {
+        "name": "my-awesome-session"
       }
     }
 

@@ -1,0 +1,12 @@
+{
+  "countMode": "NO_COUNT",
+  "fileType": "script",
+  "logRequest": false,
+  "matchers": [
+    {
+      "name": "any-route",
+      "method": "GET|POST",
+      "url": "/.*"
+    }
+  ]
+}

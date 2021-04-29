@@ -1,5 +1,16 @@
 
-## Configuration file
+# Installaling and running
+
+```sh
+npm i -g ezmockserver
+
+cd /path/to/my/mock/directory
+
+# create the ezmockserver.json configuration file
+
+ezmockserver
+```
+# Configuration file
 
 ```jsonc
 // ezmockserver.json
@@ -53,11 +64,7 @@
   ]
 }
 ```
-
-<br/>
-
-
-## Session schema:
+## [Session schema:](#session-schema)
 
 **name**: \
 Session name to be activated. Required
@@ -160,8 +167,6 @@ When this parameter is set to **COUNT_ALL**, the server will increment the count
 Set if mockserver will group counter (set in **countMode**) by incoming IP address. Optional\
 Default: **true**
 
-<br/>
-
 **matchers**:\
 Matchers is an easy way of intercepting/responding to requests applying regex patterns on http method and url\
 Optional\
@@ -178,13 +183,50 @@ Any matcher should follow this object
 
 If **matcher** is not provided, the server will use **defaultMatchers** from configuration file.
 
-<br/>
+
 
 ## Checkout examples [here](./examples).
 
-<br/>
+## Starting a session
 
-## Running with Docker
+There are two ways to start a session
+- Setting **defaultSession** at startup configuration file (*ezmockserver.json*)
+- Through the [API server](#api-server)
+
+If a file named *.config.json* is found at session directory, then the session will be merged with it. This file should follow [Session schema](#session-schema)
+
+# [API Server](#api-server)
+
+## Starting a session
+
+```sh
+# data-raw should follow Session schema
+curl --location --request POST 'http://localhost:3050/sessions/current' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "my-session",
+    "countMode": "NO_COUNT",
+    "fileType": "script",
+    "logRequest": false
+  }'
+```
+
+## Uploading a session
+
+```sh
+# session.zip should be a zip file performed at session directory
+curl --location --request POST 'http://localhost:3050/sessions' --form 'file=@"/path/to/my-session.zip"'
+```
+
+## Listing available sessions
+
+```sh
+curl --location --request GET 'http://localhost:3050/sessions'
+```
+
+
+
+# Running with Docker
 
 Mount folder containing ezmockserver.json to "/ezmockserver"
 
@@ -196,9 +238,7 @@ docker run --rm \
   trzenaro/ezmockserver:latest
 ```
 
-<br/>
-
-## Self-signed certificate
+# HTTPS support
 
 ezmockserver has a built-in self-signed certificate to respond to HTTPS connections for localhost
 
