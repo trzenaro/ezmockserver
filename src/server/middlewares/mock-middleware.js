@@ -206,7 +206,8 @@ const handleMockRequest = async (ctx, files) => {
   if (session.fileType == "script") {
     const jsFile = require(files.js);
     session._requiredFiles.push(files.js);
-    Object.assign(response, jsFile.execute(ctx));
+    const executionResult = await jsFile.execute(ctx);
+    Object.assign(response, executionResult);
   } else {
     const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([
       fsPromises.readFile(files.options),
