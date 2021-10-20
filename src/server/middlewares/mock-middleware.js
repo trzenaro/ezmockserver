@@ -11,6 +11,10 @@ const sleep = require("../../utils/sleep");
 const { proxy } = config;
 const MAX_FILE_LENGTH = 230;
 const INVALID_FILENAME_CHARS = /<|>|:|"|\/|\\|\||\?|\*/g;
+const IGNORED_HEADERS = {
+  'content-length': true,
+  'transfer-encoding': true,
+}
 
 const buildFilenames = (fileSettings) => {
   let { directory, counter, method, url, matcher } = fileSettings;
@@ -115,11 +119,12 @@ const mockMiddleware = async (ctx) => {
 
   ctx.status = response.status;
   ctx.body = response.body;
-  ctx.remove("Content-Length"); // remove content-length set by ctx.body to avoid conflicting with proxied headers;
   Object.entries(response.headers || {}).forEach(([header, headerValue]) => {
-    ctx.set(header, headerValue);
+    if (header in IGNORED_HEADERS) return;
+      ctx.set(header, headerValue);
   });
-  ctx.remove("Content-Encoding"); // remove content-encoding since node-fetch already does the job
+
+  ctx.remove("content-encoding"); // remove content-encoding since node-fetch already decodes the request and this proxy does not work piping responses
 
   if (response.delay) await sleep(response.delay);
 };
