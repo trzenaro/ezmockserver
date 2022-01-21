@@ -45,6 +45,7 @@ const buildFilenames = (fileSettings) => {
     content: `${filePrefix}.content`,
   };
 
+  console.log(`Files: ${JSON.stringify(files)}`);
   return files;
 };
 
@@ -86,6 +87,11 @@ const mockMiddleware = async (ctx) => {
     const { originalUrl } = ctx;
 
     const matcher = findMatcher(ctx);
+    if (matcher){
+      console.log(`Matcher found: ${JSON.stringify(matcher)}`);
+    }else{
+      console.log(`No matchers found`);
+    }
 
     const requestCounter = getRequestCounter(ctx, matcher);
 
@@ -194,6 +200,7 @@ const handleRequestAsProxy = async (ctx, files) => {
 
     if (!performRequest) throw new Error("No routes found to proxy the request");
 
+    console.log(`Calling destination server: ${JSON.stringify(destinationRequest)}`);
     const destinationResponse = await requestDestinationServer(destinationRequest, files);
     response.status = destinationResponse.status;
     response.body = destinationResponse.body;
@@ -211,9 +218,11 @@ const handleMockRequest = async (ctx, files) => {
   if (session.fileType == "script") {
     const jsFile = require(files.js);
     session._requiredFiles.push(files.js);
+    console.log(`Calling execute() at ${files.js}`)
     const executionResult = await jsFile.execute(ctx);
     Object.assign(response, executionResult);
   } else {
+    console.log(`Searching response at ${files.options} | ${files.content}`);
     const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([
       fsPromises.readFile(files.options),
       fsPromises.readFile(files.content),

@@ -1,0 +1,28 @@
+{
+  "api": {
+    "httpPort": 3050
+  },
+  "server": {
+    "httpPort": 3000,
+    "httpsPort": 3001
+  },
+  "sessionsDirectory": "./sessions",
+  "defaultSession": {
+    "name": "default",
+    "countMode": "NO_COUNT",
+    "fileType": "script",
+    "logRequest": false
+  },
+  "defaultMatchers": [
+    {
+      "name": "users",
+      "method": "^GET$",
+      "url": "/users/.*"
+    },
+    {
+      "name": "any-other-route",
+      "method": "^(GET|POST|PUT|PATCH)$",
+      "url": "/.*"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "api": {
+    "httpPort": 3050
+  },
+  "server": {
+    "httpPort": 3000
+  },
+  "sessionsDirectory": "./sessions",
+  "defaultSession": {
+    "name": "my-content-session",
+    "fileType": "content",
+    "countMode": "COUNT_BY_REQUEST_URL"
+  }
+}

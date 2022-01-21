@@ -40,6 +40,8 @@ const activateSession = async (newSession) => {
   });
 
   _requiredFiles.forEach((filePath) => delete require.cache[filePath]);
+
+  console.log(`New session activated: ${JSON.stringify(session)}`);
 };
 
 const deactivateCurrentSession = async () => {
