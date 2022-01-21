@@ -72,11 +72,15 @@ const getRequestCounter = (ctx, matcher) => {
 
 const findMatcher = (ctx) => {
   const matcherFound = session.matchers.find((matcher) => {
-    if (!ctx.method.match(matcher.method)) return false;
-    if (!ctx.originalUrl.match(matcher.url)) return false;
+    regexMethod = new RegExp(matcher.method);
+    regexUrl = new RegExp(matcher.url);
+
+    if (!regexMethod.test(ctx.method)) return false;
+    if (!regexUrl.test(ctx.originalUrl)) return false;
 
     return true;
   });
+  
   return matcherFound;
 };
 

@@ -168,7 +168,15 @@ Set if mockserver will group counter (set in **countMode**) by incoming IP addre
 Default: **true**
 
 **matchers**:\
-Matchers is an easy way of intercepting/responding to requests applying regex patterns on http method and url\
+Matchers is an easy way of intercepting/responding to requests applying regex patterns on http method and url. Make sure to **escape** the regex to a javascript string.\
+A good way to validate regex is to write the following code to a javascript console, get the output, copy to a validator such as [regex101](regex101.com) and validate the expression with the given text
+```javascript
+new RegExp("/oauth2/token\\?grant_type=client_credentials")
+
+// output:
+
+/\/oauth2\/token\?grant_type=client_credentials/
+```
 Optional\
 default: **[]**
 
