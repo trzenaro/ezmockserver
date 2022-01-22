@@ -1,8 +1,10 @@
+const logger = require('../../utils/light-logger');
+
 const errorHandler = async (ctx, next) => {
   try {
     await next();
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     ctx.status = 500;
   }
 };

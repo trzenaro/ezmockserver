@@ -5,6 +5,7 @@ const { sessionsDirectory } = require("../../config/config");
 const { deleteFile, listSubdirectories, zipDirectory } = require("../../utils/fs");
 const session = require("../../shared/session");
 const config = require("../../config/config");
+const logger = require('../../utils/light-logger');
 
 const readSessionFromConfigFile = async (sessionName) => {
   const sessionDirectory = path.join(config.sessionsDirectory, sessionName);
@@ -41,7 +42,8 @@ const activateSession = async (newSession) => {
 
   _requiredFiles.forEach((filePath) => delete require.cache[filePath]);
 
-  console.log(`New session activated: ${JSON.stringify(session)}`);
+  logger.info("New session activated");
+  logger.info(session);
 };
 
 const deactivateCurrentSession = async () => {

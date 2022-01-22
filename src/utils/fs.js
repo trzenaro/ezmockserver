@@ -1,6 +1,7 @@
 const fs = require("fs");
 const archiver = require("archiver");
 const _ = require("lodash");
+const logger = require('./light-logger');
 
 const fsPromises = fs.promises;
 
@@ -8,6 +9,7 @@ const createDirectoryIfNotExists = async (directory) => {
   try {
     await fsPromises.access(directory);
   } catch (error) {
+    logger.info(`Creating directory ${directory}`);
     await fsPromises.mkdir(directory, { recursive: true });
   }
 };

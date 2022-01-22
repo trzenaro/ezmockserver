@@ -11,6 +11,7 @@ if (!path.isAbsolute(settings.sessionsDirectory)) {
 }
 
 const config = {
+  logLevel: settings.logLevel || "INFO",
   sessionsDirectory,
   server: {
     httpPort: settings.server.httpPort,
