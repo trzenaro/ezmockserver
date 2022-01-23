@@ -244,7 +244,7 @@ const handleMockRequest = async (ctx, files) => {
     const executionResult = await jsFile.execute(ctx);
     Object.assign(response, executionResult);
   } else {
-    logger.debug(`Fetching response from "${path.basename(files.options)}" | "${path.basename(files.content)}"`);
+    logger.debug(`Loading response from "${path.basename(files.options)}" | "${path.basename(files.content)}"`);
     const [responseOptionsBuffer, responseDataBuffer] = await Promise.all([
       fsPromises.readFile(files.options),
       fsPromises.readFile(files.content),

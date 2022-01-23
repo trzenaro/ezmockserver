@@ -15,6 +15,7 @@ ezmockserver
 ```jsonc
 // ezmockserver.json
 {
+  "logLevel": "DEBUG",
   "sessionsDirectory": "./sessions",
   "api": { // one of httpPort|httpsPort must be provided
     "httpPort": 3050,
@@ -64,6 +65,10 @@ ezmockserver
   ]
 }
 ```
+
+**logLevel**: [*DEBUG|INFO|WARN|ERROR*]\
+Default: **INFO**
+
 ## [Session schema:](#session-schema)
 
 **name**: \
@@ -102,8 +107,8 @@ This configuration make sense when you want to simulate differente values and ti
 
 **logRequest**:\
 Set if a file should be created with all incoming request data. Optional\
-Default: **true**
-Output file: `<session-directory>/<session-name>/[<counter>.]<method>.<url>.req.json`\
+Default: **true**\
+Output file: `<session-directory>/<session-name>/[<counter>.]<method>.<url>.req.json`
 
 Example:
 
@@ -261,3 +266,23 @@ openssl req \
   -keyout certs/localhost.key \
   -subj "/C=BR/ST=Sao Paulo/L=Sao Jose do Rio Preto/O=ezmockserver/OU=development/CN=localhost"
 ```
+
+# To Do list
+* Implement tests validating:
+  ### Server
+  * matchers
+  * default matchers
+  * count mode
+  * fixed response
+  * scripted response
+  * logging (application log)
+  * logging (request log file)
+  * grouping request by ip
+
+  ### API
+  * get active session
+  * get available sessions
+  * activating session
+  * stopping session
+  * uploading session
+  * downloading session

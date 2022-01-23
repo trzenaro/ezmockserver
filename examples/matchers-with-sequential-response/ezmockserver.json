@@ -1,4 +1,5 @@
 {
+  "logLevel": "DEBUG",
   "api": {
     "httpPort": 3050
   },
