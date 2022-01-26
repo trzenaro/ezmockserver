@@ -1,8 +1,6 @@
 const prompts = require('prompts');
 const fs = require('fs')
 
-const args = process.argv.slice(2);
-
 const configFile = `{
   "fileType": "content",
   "logRequest": true,
@@ -10,7 +8,7 @@ const configFile = `{
   "groupResponsesByIp": true
 }`
 
-const defaultRequestContent = '{"message": "ok}'
+const defaultRequestContent = '{"message": "ok"}'
 const defaultRequestJson = `
 {
   "status": 200,
@@ -73,7 +71,7 @@ const configureApi = async () => {
       name: 'sessionDirectory',
       message: 'What will be the path to the session directory',
       initial: './sessions/',
-      validate: (sessionDirectory) => (sessionDirectory.trim().length > 3 && sessionDirectory.endsWith('/') && sessionDirectory.endsWith('/')) ? true : 'Session Directory must have at least 3 characters and that ends up with "/"'
+      validate: (sessionDirectory) => (sessionDirectory.trim().length > 3 && sessionDirectory.endsWith('/')) ? true : 'Session Directory must have at least 3 characters and that ends up with "/"'
     },
     {
       type: 'text',
@@ -95,8 +93,8 @@ const configureApi = async () => {
   if (!isCanceled) {
     try {
       if (!fs.existsSync(responses.sessionDirectory)) {
-        fs.mkdirSync(responses.sessionDirectory)
-        fs.mkdirSync(`${responses.sessionDirectory}${responses.defaultSession}`)
+        // fs.mkdirSync(responses.sessionDirectory)
+        fs.mkdirSync(`${responses.sessionDirectory}${responses.defaultSession}`, { recursive: true })
 
         fs.writeFileSync('ezmockserver.json', defaultTemplate(responses), 'utf8')
         fs.writeFileSync(`${responses.sessionDirectory}${responses.defaultSession}/.config.json`, configFile, 'utf8')
@@ -116,6 +114,3 @@ const configureApi = async () => {
 module.exports = { 
   configureApi
 }
-// // if (args[0] === 'init') {
-// (async () => {) ();
-// }
