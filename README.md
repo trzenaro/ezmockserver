@@ -1,15 +1,19 @@
 
-# Installaling and running
+# Installing
 
 ```sh
 npm i -g ezmockserver
+```
 
+# Setting up a default configuration
+```sh
 cd /path/to/my/mock/directory
 
-# create the ezmockserver.json configuration file
-
-ezmockserver
+ezmockserver init
 ```
+With this init configuration you can set up the server after configuring your ezmockserver
+**Obs:.** It will automatically create the ezmockserver json file and setting up a default folder with some default settings in order to see how it is meant to work.
+In this first draft it will **just** work a default setting
 # Configuration file
 
 ```jsonc
@@ -42,7 +46,7 @@ ezmockserver
       {
         "name": "users-with-id-route",
         "method": "^GET$", // regex
-        "url": "/users/\\d+" // regex
+        "url": "/users/\\\\d+" // regex
       },
       {
         "name": "any-other-routes",
@@ -55,7 +59,7 @@ ezmockserver
     {
       "name": "users-with-id-route",
       "method": "^GET$", // regex
-      "url": "/users/\\d+" // regex
+      "url": "/users/\\\\d+" // regex
     },
     {
       "name": "any-other-routes",
