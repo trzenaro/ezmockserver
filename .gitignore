@@ -4,3 +4,4 @@ ezmockserver
 tmp
 /ezmockserver.json
 *.req.json
+.vscode

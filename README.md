@@ -228,6 +228,16 @@ curl --location --request POST 'http://localhost:3050/sessions/current' \
   }'
 ```
 
+## Getting information about active session
+
+```sh
+# get only the name of active session
+curl --location --request GET 'http://localhost:3050/sessions/current'
+
+# this request shows all received requests with its url, headers and body
+curl --location --request GET 'http://localhost:3050/sessions/current?tracedRequests=true'
+```
+
 ## Uploading a session
 
 ```sh

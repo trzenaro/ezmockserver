@@ -16,7 +16,16 @@ const deactivateCurrentSession = async (ctx) => {
 };
 
 const getCurrentSession = async (ctx) => {
-  ctx.body = await sessionService.getCurrentSession();
+  const currentSession = await sessionService.getCurrentSession();
+  ctx.body = currentSession.name;
+
+  const { query } = ctx.request;
+  const queryCount = Object.entries(query).length;
+  if (queryCount > 0) ctx.body = { name: currentSession.name };
+
+  if ('tracedRequests' in query && query.tracedRequests == 'true') {
+    ctx.body.tracedRequests = currentSession._tracedRequests;
+  }
   ctx.status = 200;
 };
 
