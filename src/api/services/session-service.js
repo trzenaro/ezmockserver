@@ -37,6 +37,7 @@ const activateSession = async (newSession) => {
     groupResponsesByIp: "groupResponsesByIp" in newSession ? newSession.groupResponsesByIp : true,
     matchers: "matchers" in newSession ? newSession.matchers : config.defaultMatchers,
     _requestCounter: { "0.0.0.0": { total: 0, requests: {} } },
+    _tracedRequests: [],
     _requiredFiles: [],
   });
 
@@ -50,7 +51,9 @@ const deactivateCurrentSession = async () => {
   Object.assign(session, { name: "" });
 };
 
-const getCurrentSession = async () => session.name;
+const getCurrentSession = async () => {
+  return session;
+};
 
 const getSessions = async () => listSubdirectories(sessionsDirectory);
 

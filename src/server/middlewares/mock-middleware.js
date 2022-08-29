@@ -124,6 +124,7 @@ const mockMiddleware = async (ctx) => {
       matcher,
     });
 
+    addToTracedRequests(ctx);
     if (session.logRequest) await logRequest(ctx, files);
 
     try {
@@ -157,25 +158,27 @@ const mockMiddleware = async (ctx) => {
   }
 };
 
+const getRequestForTracing = (ctx) => {
+  return {
+    date: new Date(),
+    ip: ctx.request.ip,
+    host: ctx.request.host,
+    href: ctx.request.href,
+    method: ctx.method,
+    url: ctx.originalUrl,
+    headers: ctx.headers,
+    body: ctx.request.body,
+  }
+}
+
+const addToTracedRequests = (ctx) => {
+  session._tracedRequests.push(getRequestForTracing(ctx));
+}
+
 const logRequest = async (ctx, files) => {
   const { request } = files;
-  await fsPromises.writeFile(
-    request,
-    JSON.stringify(
-      {
-        date: new Date(),
-        ip: ctx.request.ip,
-        host: ctx.request.host,
-        href: ctx.request.href,
-        method: ctx.method,
-        url: ctx.originalUrl,
-        headers: ctx.headers,
-        body: ctx.request.body,
-      },
-      null,
-      2,
-    ),
-  );
+  const requestAsString = JSON.stringify(getRequestForTracing(ctx), null, 2);
+  await fsPromises.writeFile(request, requestAsString);
 };
 
 const handleRequestAsProxy = async (ctx, files) => {
