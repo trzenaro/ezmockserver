@@ -187,17 +187,20 @@ const handleRequestAsProxy = async (ctx, files) => {
     url: ctx.originalUrl,
     method: ctx.method,
     headers: {},
-    body: ctx.method !== "GET" ? ctx.request.body : null,
+    body: null,
   };
 
   const destinationHeaders = { ...ctx.headers };
   delete destinationHeaders.host;
   destinationRequest.headers = destinationHeaders;
 
-  if (ctx.is("urlencoded")) {
-    destinationRequest.body = qs.stringify(ctx.request.body);
-  } else if (ctx.is("json")) {
-    destinationRequest.body = JSON.stringify(ctx.request.body);
+  if (ctx.method !== "GET" && ctx.method !== "HEAD") {
+    destinationRequest.body = ctx.request.body;
+    if (ctx.is("urlencoded")) {
+      destinationRequest.body = qs.stringify(ctx.request.body);
+    } else if (ctx.is("json")) {
+      destinationRequest.body = JSON.stringify(ctx.request.body);
+    }
   }
 
   let performRequest = false;
