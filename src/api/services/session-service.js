@@ -1,11 +1,13 @@
-const { promises: fsPromises } = require("fs");
+const fs = require("fs");
 const path = require("path");
 const unzipper = require("unzipper");
 const { sessionsDirectory } = require("../../config/config");
 const { deleteFile, listSubdirectories, zipDirectory } = require("../../utils/fs");
 const session = require("../../shared/session");
 const config = require("../../config/config");
-const logger = require('../../utils/light-logger');
+const logger = require("../../utils/light-logger");
+
+const fsPromises = fs.promises;
 
 const readSessionFromConfigFile = async (sessionName) => {
   const sessionDirectory = path.join(config.sessionsDirectory, sessionName);
