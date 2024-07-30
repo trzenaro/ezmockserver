@@ -3,7 +3,7 @@ const path = require("path");
 const http = require("http");
 const https = require("https");
 const Koa = require("koa");
-const koaBody = require("koa-body");
+const { bodyParser } = require("@koa/bodyparser");
 const koaLogger = require("koa-logger");
 const cors = require("@koa/cors");
 const { server: config } = require("../config/config");
@@ -19,7 +19,7 @@ const init = () => {
 
     app.use(koaLogger());
     app.use(cors());
-    app.use(koaBody());
+    app.use(bodyParser());
     app.use(errorHandler);
     app.use(mockMiddleware);
 

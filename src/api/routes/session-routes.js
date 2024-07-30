@@ -1,4 +1,4 @@
-const Router = require("koa-router");
+const Router = require("@koa/router");
 const sessionController = require("../controllers/session-controller");
 
 const sessionRouter = new Router();
